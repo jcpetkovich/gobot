@@ -1,3 +1,0 @@
-[submodule "internal/github.com/thoj/go-ircevent"]
-	path = internal/github.com/thoj/go-ircevent
-	url = https://github.com/thoj/go-ircevent
