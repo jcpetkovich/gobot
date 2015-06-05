@@ -5,7 +5,7 @@ import "fmt"
 import "io/ioutil"
 import "os"
 import "os/exec"
-import irc "./internal/github.com/thoj/go-ircevent"
+import irc "github.com/thoj/go-ircevent"
 import re "regexp"
 import s "strings"
 
