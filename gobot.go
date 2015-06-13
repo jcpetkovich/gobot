@@ -8,6 +8,7 @@ import "os/exec"
 import irc "github.com/thoj/go-ircevent"
 import re "regexp"
 import s "strings"
+import "math/rand"
 
 const nick = "GOBOT"
 
@@ -22,6 +23,16 @@ var cheesePattern = re.MustCompile("(?i)cheese")
 var implementedPattern = re.MustCompile("(?i)implemented")
 var equationPattern = re.MustCompile(".*= *$")
 var expPattern = re.MustCompile("GOBOT:(.*)=")
+var helpPattern = re.MustCompile("(?i)(?:help|what.*you do)")
+var thanksPattern = re.MustCompile("(?i)(?:thanks|cool|awesome)")
+
+var cannedResponse = []string{
+	"%s: Sorry, what's that?",
+	"%s: Uhhh, what?",
+	"%s: Ask someone else for help, I'm busy.",
+	"%s: I'm not sure what you mean...",
+}
+var helpMessage = "%s: I can do maths, that's basically it. Send me an equation followed by ="
 
 func dispatch(e *irc.Event) {
 	conn := e.Connection
@@ -32,34 +43,42 @@ func dispatch(e *irc.Event) {
 		conn.Privmsgf(channel, "%s: cheese is pretty good", e.Nick)
 	case implementedPattern.MatchString(e.Message()):
 		conn.Privmsgf(channel, "%s: yes damnit, satisfied?", e.Nick)
+	case helpPattern.MatchString(e.Message()):
+		conn.Privmsgf(channel, helpMessage, e.Nick)
 	case equationPattern.MatchString(e.Message()):
-		expression := expPattern.FindStringSubmatch(e.Message())[1]
-		fmt.Println("expression:", expression)
-		bc := exec.Command("bc")
-		bcIn, err := bc.StdinPipe()
-		if err != nil {
-			return
-		}
-		bcOut, err := bc.StdoutPipe()
-		if err != nil {
-			return
-		}
-
-		bc.Start()
-		bcIn.Write([]byte(expression))
-		bcIn.Write([]byte("\n"))
-		bcIn.Close()
-		bcBytes, _ := ioutil.ReadAll(bcOut)
-		bc.Wait()
-		result := s.Trim(string(bcBytes), " \n\t")
-		if result == "" {
-			conn.Privmsgf(channel, "%s: I think your equation is wrong, based on Math... try without extra words.", e.Nick)
-		} else {
-			conn.Privmsgf(channel, "%s: %s, I think...", e.Nick, result)
-		}
-
+		maths(e)
+	case thanksPattern.MatchString(e.Message()):
+		conn.Privmsgf(channel, "%s: Glad I could maybe help somehow...", e.Nick)
 	default:
-		conn.Privmsgf(channel, "%s: I'm not sure what you mean...", e.Nick)
+		conn.Privmsgf(channel, cannedResponse[rand.Intn(len(cannedResponse))], e.Nick)
+	}
+}
+
+func maths(e *irc.Event) {
+	conn := e.Connection
+	expression := expPattern.FindStringSubmatch(e.Message())[1]
+	fmt.Println("expression:", expression)
+	bc := exec.Command("bc")
+	bcIn, err := bc.StdinPipe()
+	if err != nil {
+		return
+	}
+	bcOut, err := bc.StdoutPipe()
+	if err != nil {
+		return
+	}
+
+	bc.Start()
+	bcIn.Write([]byte(expression))
+	bcIn.Write([]byte("\n"))
+	bcIn.Close()
+	bcBytes, _ := ioutil.ReadAll(bcOut)
+	bc.Wait()
+	result := s.Trim(string(bcBytes), " \n\t")
+	if result == "" {
+		conn.Privmsgf(channel, "%s: I think your equation is wrong, based on Math... try without extra words.", e.Nick)
+	} else {
+		conn.Privmsgf(channel, "%s: %s, I think...", e.Nick, result)
 	}
 }
 
