@@ -27,6 +27,7 @@ var languagePattern = re.MustCompile("(?i)(?:fuck|shit|damn|gay)")
 var apologyPattern = re.MustCompile("(?i)(?:sorry)")
 var helpPattern = re.MustCompile("(?i)(?:help|what.*you do)")
 var thanksPattern = re.MustCompile("(?i)(?:thanks|cool|awesome)")
+var coffeePattern = re.MustCompile("(?i)(?:coffee|caffeine|tea)")
 
 var cannedResponse = []string{
 	"%s: Sorry, what's that?",
@@ -55,6 +56,8 @@ func dispatch(e *irc.Event) {
 		conn.Privmsgf(channel, "%s: Act like an adult, be more respectful", e.Nick)
 	case apologyPattern.MatchString(e.Message()):
 		conn.Privmsgf(channel, "%s: It's ok, I forgive you.", e.Nick)
+	case coffeePattern.MatchString(e.Message()):
+		conn.Privmsgf(channel, "%s: Did you say coffee? Get one for JC.", e.Nick)
 	default:
 		conn.Privmsgf(channel, cannedResponse[rand.Intn(len(cannedResponse))], e.Nick)
 	}
