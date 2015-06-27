@@ -28,12 +28,14 @@ var apologyPattern = re.MustCompile("(?i)(?:sorry|my bad)")
 var helpPattern = re.MustCompile("(?i)(?:help|what.*you do)")
 var thanksPattern = re.MustCompile("(?i)(?:thanks|cool|awesome)")
 var coffeePattern = re.MustCompile("(?i)(?:coffee|caffeine|tea)")
+var godPattern = re.MustCompile("(?i)(?:where|what).*god")
 
 var cannedResponse = []string{
 	"%s: Sorry, what's that?",
 	"%s: Uhhh, what?",
-	"%s: Ask someone else for help, I'm busy.",
+	"%s: K, wait, what?",
 	"%s: I'm not sure what you mean...",
+	"%s: I am reasonably certain that I don't understand that.",
 }
 var helpMessage = "%s: I can do maths, that's basically it. Send me an equation followed by ="
 
@@ -58,6 +60,8 @@ func dispatch(e *irc.Event) {
 		conn.Privmsgf(channel, "%s: It's ok, I forgive you.", e.Nick)
 	case coffeePattern.MatchString(e.Message()):
 		conn.Privmsgf(channel, "%s: Did you say coffee? Get one for JC.", e.Nick)
+	case godPattern.MatchString(e.Message()):
+		conn.Privmsgf(channel, "%s: God? What God?", e.Nick)
 	default:
 		conn.Privmsgf(channel, cannedResponse[rand.Intn(len(cannedResponse))], e.Nick)
 	}
@@ -66,6 +70,8 @@ func dispatch(e *irc.Event) {
 func maths(e *irc.Event) {
 	conn := e.Connection
 	expression := expPattern.FindStringSubmatch(e.Message())[1]
+	wordPattern, _ := re.Compile("[a-zA-Z']+")
+	expression = wordPattern.ReplaceAllString(expression, "")
 	fmt.Println("expression:", expression)
 	bc := exec.Command("bc")
 	bcIn, err := bc.StdinPipe()
@@ -87,7 +93,7 @@ func maths(e *irc.Event) {
 	if result == "" {
 		conn.Privmsgf(channel, "%s: I think your equation is wrong, based on Math... try without extra words.", e.Nick)
 	} else {
-		conn.Privmsgf(channel, "%s: %s, I think...", e.Nick, result)
+		conn.Privmsgf(channel, "%s: %s, yup, pretty sure.", e.Nick, result)
 	}
 }
 
