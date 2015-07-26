@@ -22,7 +22,7 @@ var nickPattern = re.MustCompile("([^!]+)!")
 var cheesePattern = re.MustCompile("(?i)cheese")
 var implementedPattern = re.MustCompile("(?i)implemented")
 var equationPattern = re.MustCompile(".*= *$")
-var expPattern = re.MustCompile("GOBOT:(.*)=")
+var expPattern = re.MustCompile(fmt.Sprintf("%s:(.*)=", nick))
 var languagePattern = re.MustCompile("(?i)(?:fuck|shit|damn)")
 var apologyPattern = re.MustCompile("(?i)(?:sorry|my bad)")
 var helpPattern = re.MustCompile("(?i)(?:help|what.*you do)")
@@ -107,12 +107,12 @@ func main() {
 	flag.Parse()
 
 	os.Setenv("BC_LINE_LENGTH", "0")
-	conn := irc.IRC("GOBOT", "GOBOT")
+	conn := irc.IRC(nick, nick)
 	conn.Password = password
 	conn.Connect(fmt.Sprintf("%s:%s", host, port))
 	conn.AddCallback("001", func(e *irc.Event) { conn.Join("#gentoo") })
 	conn.AddCallback("PRIVMSG", func(e *irc.Event) {
-		if toGoBot, _ := re.MatchString("GOBOT:", e.Message()); toGoBot {
+		if toGoBot, _ := re.MatchString(fmt.Sprintf("%s:", nick), e.Message()); toGoBot {
 			dispatch(e)
 		}
 	})
